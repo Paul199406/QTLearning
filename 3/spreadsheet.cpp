@@ -8,7 +8,9 @@ Spreadsheet::Spreadsheet(QWidget *parent)
 {
     autoRecalc = true;
 
+    //使用Cell项来代替QTableWidgetItem
     setItemPrototype(new Cell);
+    //允许简单矩形选择框
     setSelectionMode(ContiguousSelection);
 
     connect(this, SIGNAL(itemChanged(QTableWidgetItem *)),
@@ -17,12 +19,14 @@ Spreadsheet::Spreadsheet(QWidget *parent)
     clear();
 }
 
+//返回当前单元格位置，按照通用格式：一个列字母后跟上行号的形式
 QString Spreadsheet::currentLocation() const
 {
     return QChar('A' + currentColumn())
-           + QString::number(currentRow() + 1);
+           + QString::number(currentRow() + 1);//列序号从0开始，因此+1
 }
 
+//返回当前单元格的公式，在MainWindow::updateStatusBar中调用。
 QString Spreadsheet::currentFormula() const
 {
     return formula(currentRow(), currentColumn());
@@ -38,11 +42,14 @@ QTableWidgetSelectionRange Spreadsheet::selectedRange() const
 
 void Spreadsheet::clear()
 {
+    //行列设为0完全清空整个表格，包括表格的标题。
     setRowCount(0);
     setColumnCount(0);
+    //重新调整表格大小为26*999
     setRowCount(RowCount);
     setColumnCount(ColumnCount);
 
+    //设置QTableWidgetItem水平方向上的标题为列 A B C 。。。
     for (int i = 0; i < ColumnCount; ++i) {
         QTableWidgetItem *item = new QTableWidgetItem;
         item->setText(QString(QChar('A' + i)));
@@ -299,6 +306,12 @@ void Spreadsheet::setFormula(int row, int column,
     c->setFormula(formula);
 }
 
+//返回给定单元格的公式，在很多情况下，公式和文本是相同的
+/*
+    如果公式是一个数字，那么它就会任务时一个数字
+    如果公式以单引号开头，那么公式的剩余部分则会被认为是文本：公式'12345'=字符串'12345'
+    如果公式以等号开始，那么公式将会被认为是一个算术公式
+*/
 QString Spreadsheet::formula(int row, int column) const
 {
     Cell *c = cell(row, column);
@@ -315,7 +328,7 @@ QString Spreadsheet::text(int row, int column) const
     if (c) {
         return c->text();
     } else {
-        return "";
+        return "";//cell是一个空指针，表示该单元格是空的
     }
 }
 
