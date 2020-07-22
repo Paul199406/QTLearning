@@ -12,7 +12,8 @@ TARGET = 8_overtimer
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        widget.cpp
+SOURCES += main.cpp \
+    oventimer.cpp
 
-HEADERS  += widget.h
+HEADERS  += \
+    oventimer.h
