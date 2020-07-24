@@ -1,5 +1,9 @@
-#include <QtGui>
+#include <QDateTime>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QTimer>
 #include <cmath>
+#include <QDebug>
 
 #ifndef M_PI
 #define M_PI 3.14159265359
@@ -18,49 +22,54 @@ OvenTimer::OvenTimer(QWidget *parent)
 {
     finishTime = QDateTime::currentDateTime();
 
-    updateTimer = new QTimer(this);
+    updateTimer = new QTimer(this);//用来每隔5秒刷新窗口部件的外观
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(update()));
 
-    finishTimer = new QTimer(this);
-    finishTimer->setSingleShot(true);
+    finishTimer = new QTimer(this);//在定时器到0时发射timeout()信号
+    finishTimer->setSingleShot(true);//只需要执行一次
     connect(finishTimer, SIGNAL(timeout()), this, SIGNAL(timeout()));
-    connect(finishTimer, SIGNAL(timeout()), updateTimer, SLOT(stop()));
+    connect(finishTimer, SIGNAL(timeout()), updateTimer, SLOT(stop()));//定时器停止工作时停止更新窗口部件
 
     QFont font;
-    font.setPointSize(8);
+    font.setPointSize(8);//设置字体为8磅
     setFont(font);
 }
 
+//设置烤箱定时器的时间为给定秒数
 void OvenTimer::setDuration(int secs)
 {
     secs = qBound(0, secs, MaxSeconds);
 
+    //保存日期和时间，避免了凌晨12点之前并且完成时间在下一天而产生的折回缺陷
     finishTime = QDateTime::currentDateTime().addSecs(secs);
 
     if (secs > 0) {
-        updateTimer->start(UpdateInterval * 1000);
-        finishTimer->start(secs * 1000);
+        updateTimer->start(UpdateInterval * 1000);//更新绘图的间隔
+        finishTimer->start(secs * 1000);//完成时间
     } else {
         updateTimer->stop();
         finishTimer->stop();
     }
-    update();
+    update();//调用update，用新的间隔时间重绘窗口部件
 }
 
+//返回定时器完成前剩余的秒数
 int OvenTimer::duration() const
 {
+
     int secs = QDateTime::currentDateTime().secsTo(finishTime);
     if (secs < 0)
         secs = 0;
     return secs;
 }
 
+//当用户点击窗口部件时，即设置定制时间
 void OvenTimer::mousePressEvent(QMouseEvent *event)
 {
     QPointF point = event->pos() - rect().center();
     double theta = std::atan2(-point.x(), -point.y()) * 180.0 / M_PI;
-    setDuration(duration() + int(theta / DegreesPerSecond));
-    update();
+    setDuration(duration() + int(theta / DegreesPerSecond));//设置新的持续时间
+    update();//重绘
 }
 
 void OvenTimer::paintEvent(QPaintEvent * /* event */)
@@ -70,8 +79,12 @@ void OvenTimer::paintEvent(QPaintEvent * /* event */)
 
     int side = qMin(width(), height());
 
+    //设置视口为窗口部件中最大的正方形：如果没有设置视口为正方形，则窗口部件被缩放为
+    //非正方形的矩形时，烤箱定时器就会变成椭圆。为了避免这种变形，必须把视口和窗口
+    //设置为具有相同纵横比的矩形
     painter.setViewport((width() - side) / 2, (height() - side) / 2,
                         side, side);
+    //设置窗口为（-50，-50，100，100）
     painter.setWindow(-50, -50, 100, 100);
 
     draw(&painter);
