@@ -1,6 +1,7 @@
 #ifndef SETTINGPANEL_H
 #define SETTINGPANEL_H
 
+#include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QScrollArea>
 #include "epushbutton.h"

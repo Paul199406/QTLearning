@@ -1,12 +1,15 @@
 #include "settingpanel.h"
 #include <QApplication>
-#include <QtGui>
+#include <QTranslator>
+#include <QDebug>
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     QTranslator translator;
-    translator.load("settingpanel.qm",":/");
+    bool b = translator.load("settingpanel.qm",":/");
+    qDebug() << b ;
     a.installTranslator(&translator);
 
     SettingPanel w;

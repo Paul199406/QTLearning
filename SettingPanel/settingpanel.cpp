@@ -6,8 +6,9 @@
 #include <QScrollBar>
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QPainter>
-#include <QMouseEvent>
+#include <QDebug>
+#include "epushbutton.h"
+#include "egroupbox.h"
 
 SettingPanel::SettingPanel(QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint)
@@ -15,12 +16,14 @@ SettingPanel::SettingPanel(QWidget *parent)
     , signFlag(false)
 {
     resize(780, 500);
-    setStyleSheet("QCheckBox{font-family:arial;font-size:13px;border-radius:2px;color:#FFFFFF;}"
+    setStyleSheet("QCheckBox{font-family:arial;font-size:13px;border-radius:2px;color:#000000;}"
                   "QCheckBox::indicator:checked{color:#FF0000}"
                   );
     backGroundPix.load(":/background.png");
     backGroundPix = backGroundPix.scaled(width(), height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    qDebug() << width() <<  height();
     rectMove = QRect(0, 0, width(), 35);
+    qDebug() << rectMove;
 
     treeWidget = new QTreeWidget(this);
     treeWidget->setFocusPolicy(Qt::NoFocus);
@@ -41,14 +44,68 @@ SettingPanel::SettingPanel(QWidget *parent)
                   "QCheckBox{font-family:arial;font-size:13px;border-radius:2px;color:#000000;}"
                   "QCheckBox::indicator:checked{color:#FF0000}"
                   );
-    treeWidget->setRootIsDecorated(false);
-    treeWidget->header()->setVisible(false);
+    treeWidget->setRootIsDecorated(false);//是否显示用于扩展和折叠顶级项目的控件: false不展示，不会在控件前出现三角提示
+    treeWidget->header()->setVisible(false);//展示treewidget的header : false
     initQTreeWidget();
 
     scrollArea = new QScrollArea(this);
-    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setFrameShape(QFrame::NoFrame);//无边框
     scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    //scrollArea->verticalScrollBar()->setStyleSheet();
+    scrollArea->verticalScrollBar()->setStyleSheet("QScrollBar:vertical"
+                                                       "{"
+                                                       "width:4px;"
+                                                       "background:rgba(0,0,0,0%);"
+                                                       "margin:0px,0px,0px,0px;"
+                                                       "padding-top:9px;"
+                                                       "padding-bottom:9px;"
+                                                       "}"
+                                                       "QScrollBar::handle:vertical"
+                                                       "{"
+                                                       "width:8px;"
+                                                       "background:rgba(0,0,0,25%);"
+                                                       " border-radius:4px;"
+                                                       "min-height:20;"
+                                                       "}"
+                                                       "QScrollBar::handle:vertical:hover"
+                                                       "{"
+                                                       "width:8px;"
+                                                       "background:rgba(0,0,0,50%);"
+                                                       " border-radius:4px;"
+                                                       "min-height:20;"
+                                                       "}"
+                                                       "QScrollBar::add-line:vertical"
+                                                       "{"
+                                                       "height:9px;width:8px;"
+                                                       "border-image:url(:/images/a/3.png);"
+                                                       "subcontrol-position:bottom;"
+                                                       "}"
+                                                       "QScrollBar::sub-line:vertical"
+                                                       "{"
+                                                       "height:9px;width:8px;"
+                                                       "border-image:url(:/images/a/1.png);"
+                                                       "subcontrol-position:top;"
+                                                       "}"
+                                                       "QScrollBar::add-line:vertical:hover"
+                                                       "{"
+                                                       "height:9px;width:8px;"
+                                                       "border-image:url(:/images/a/4.png);"
+                                                       "subcontrol-position:bottom;"
+                                                       "}"
+                                                       "QScrollBar::sub-line:vertical:hover"
+                                                       "{"
+                                                       "height:9px;width:8px;"
+                                                       "border-image:url(:/images/a/2.png);"
+                                                       "subcontrol-position:top;"
+                                                       "}"
+                                                       "QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical"
+                                                       "{"
+                                                       "background:rgba(0,0,0,10%);"
+                                                       "border-radius:4px;"
+                                                       "}"
+                                                       );
+    //scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     scrollArea->setFocusPolicy(Qt::NoFocus);
 
     makeSure = new QPushButton(this);
@@ -69,16 +126,32 @@ SettingPanel::SettingPanel(QWidget *parent)
     closeButton->setToolTip(tr("close"));
     connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
 
-    //connect(scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(slotValueChanged(int)));
+    connect(scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(slotValueChanged(int)));
+
+    /*
+    当用户在窗口小部件内单击时，将发出此信号。
+    指定的项目是单击的项目。 该列是单击的项目的列。 如果未单击任何项目，则不会发出信号。
+    */
     connect(treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(slotItemClicked(QTreeWidgetItem*, int)));
     slotItemClicked(treeWidget->topLevelItem(0), 0);
 }
 
 void SettingPanel::initQTreeWidget()
 {
+    //基本功能
     QTreeWidgetItem *settingItem = new QTreeWidgetItem(treeWidget);
     settingItem->setIcon(0, QIcon(QPixmap (":/setting.png")));
     settingItem->setText(0, tr("settings"));
+
+    /*
+        功能定制
+        系统右键菜单
+        升级设置
+        开机启动项设置
+        用户体验改善计划
+        云安全计划
+        网址云安全计划
+    */
     QTreeWidgetItem *settingItem_one = new QTreeWidgetItem(settingItem);
     settingItem_one->setIcon(0, QIcon(QPixmap (":/point.png")));
     settingItem_one->setText(0, tr("function"));
@@ -101,9 +174,14 @@ void SettingPanel::initQTreeWidget()
     settingItem_seven->setIcon(0, QIcon(QPixmap (":/point.png")));
     settingItem_seven->setText(0, tr("netcloudplan"));
 
+    //弹窗设置
     QTreeWidgetItem *popupItem = new QTreeWidgetItem(treeWidget);
     popupItem->setIcon(0, QIcon(QPixmap (":/popwindow.png")));
     popupItem->setText(0, tr("popup"));
+
+    /*
+
+    */
     QTreeWidgetItem *popupItem_one = new QTreeWidgetItem(popupItem);
     popupItem_one->setIcon(0, QIcon(QPixmap (":/point.png")));
     popupItem_one->setText(0, tr("defendpop"));
@@ -135,10 +213,13 @@ void SettingPanel::initQTreeWidget()
     popupItem_ten->setIcon(0, QIcon(QPixmap (":/point.png")));
     popupItem_ten->setText(0, tr("drivertips"));
 
+
+    //开机小助手
     QTreeWidgetItem *startItem = new QTreeWidgetItem(treeWidget);
     startItem->setIcon(0, QIcon(QPixmap (":/start.png")));
     startItem->setText(0, tr("start"));
 
+    //安全防护中心
     QTreeWidgetItem *defendItem = new QTreeWidgetItem(treeWidget);
     defendItem->setIcon(0, QIcon(QPixmap (":/defend.png")));
     defendItem->setText(0, tr("defend"));
@@ -188,9 +269,11 @@ void SettingPanel::initQTreeWidget()
     defendItem_fifteen->setIcon(0, QIcon(QPixmap (":/point.png")));
     defendItem_fifteen->setText(0, tr("autodefend"));
 
+    //漏洞修复
     QTreeWidgetItem *repairItem = new QTreeWidgetItem(treeWidget);
     repairItem->setIcon(0, QIcon(QPixmap (":/repair.png")));
     repairItem->setText(0, tr("repair"));
+
     QTreeWidgetItem *repairItem_one = new QTreeWidgetItem(repairItem);
     repairItem_one->setIcon(0, QIcon(QPixmap (":/point.png")));
     repairItem_one->setText(0, tr("patchpath"));
@@ -268,6 +351,8 @@ void SettingPanel::initSettingsWidget()
     third->setGeometry(15, 55, 500, 30);
     third->show();
     functionBox->setGeometry(0, 0, 560, 95);
+
+
     /************rightmenuBox**************/
     rightmenuBox = new EGroupBox(widgetScrollArea);
     rightmenuBox->setTitle(tr("rightmenu"));
@@ -300,6 +385,8 @@ void SettingPanel::initSettingsWidget()
     rfive->setGeometry(15, 145, 500, 30);
     rfive->show();
     rightmenuBox->setGeometry(0, 110, 560, 185);
+
+
     /************updatesetupBox**************/
     updatesetupBox = new EGroupBox(widgetScrollArea);
     updatesetupBox->setTitle(tr("updatesetup"));
@@ -340,6 +427,8 @@ void SettingPanel::initSettingsWidget()
     uforth2->setGeometry(300, 115, 500, 30);
     uforth2->show();
     updatesetupBox->setGeometry(0, 310, 560, 145);
+
+
     /************startmunuBox**************/
     startmunuBox = new EGroupBox(widgetScrollArea);
     startmunuBox->setTitle(tr("startmunu"));
@@ -351,6 +440,8 @@ void SettingPanel::initSettingsWidget()
     sfirst->setGeometry(15, 25, 500, 30);
     sfirst->show();
     startmunuBox->setGeometry(0, 470, 560, 55);
+
+
     /************userexperienceBox**************/
     userexperienceBox = new EGroupBox(widgetScrollArea);
     userexperienceBox->setTitle(tr("userexperience"));
@@ -362,6 +453,8 @@ void SettingPanel::initSettingsWidget()
     ufirst->setGeometry(15, 25, 500, 30);
     ufirst->show();
     userexperienceBox->setGeometry(0, 540, 560, 55);
+
+
     /************cloundplanBox**************/
     cloundplanBox = new EGroupBox(widgetScrollArea);
     cloundplanBox->setTitle(tr("cloundplan"));
@@ -382,6 +475,8 @@ void SettingPanel::initSettingsWidget()
     csecond->setGeometry(180, 25, 500, 25);
     csecond->show();
     cloundplanBox->setGeometry(0, 610, 560, 55);
+
+
     /************netcloudplanBox**************/
     netcloudplanBox = new EGroupBox(widgetScrollArea);
     netcloudplanBox->setTitle(tr("netcloudplan"));
@@ -731,6 +826,7 @@ void SettingPanel::childItemChanged(QTreeWidgetItem *item)
         if (item->text(0) == tr("function")) {
             functionBox->setSelected(true);
             widgetPos = functionBox->pos();
+            qDebug() << "clicked pos:" << widgetPos;
             scrollArea->verticalScrollBar()->setSliderPosition(widgetPos.y());
         }
         else if (item->text(0) == tr("rightmenu")) {
@@ -854,11 +950,15 @@ void SettingPanel::slotItemClicked(QTreeWidgetItem *item, int column)
     int index = 0;
     signFlag = true;
     int count = treeWidget->topLevelItemCount();
+
     for (; index < count; index++) {
         if (item == treeWidget->topLevelItem(index)) {
             break;
         }
     }
+
+
+    //没有找到
     if (index == count) {
         childItemChanged(item);
         return;
@@ -890,25 +990,35 @@ void SettingPanel::slotItemClicked(QTreeWidgetItem *item, int column)
 
 void SettingPanel::slotValueChanged(int value)
 {
+    qDebug() << "value:" << value;
     if (!signFlag) {
         setAllSelectedFalse();
+
         if (treeWidget->currentItem()->text(0) == tr("settings") ||
             treeWidget->currentItem()->text(0) == tr("popup")    ||
             treeWidget->currentItem()->text(0) == tr("start")    ||
             treeWidget->currentItem()->text(0) == tr("defend")   ||
             treeWidget->currentItem()->text(0) == tr("repair")
             ) {
+                //展开项目
                 treeWidget->expandItem(treeWidget->currentItem());
+                //子项目大于0
                 if (treeWidget->currentItem()->childCount() > 0) {
                     treeWidget->setCurrentItem(treeWidget->currentItem()->child(0));
+                    qDebug() << "childCount:" << treeWidget->currentItem()->childCount();
                 }
                 else {
                     return;
                 }
         }
         if (treeWidget->currentItem()->parent()->text(0) == tr("settings")) {
+            qDebug() << "in settings";
             QRect rect= functionBox->visibleRegion().boundingRect();
+            qDebug() << "settings-1:" << rect;
+            qDebug() << "settings-2:" << functionBox->visibleRegion();
             if (!(functionBox->visibleRegion() - QRegion(rect.x(), rect.y(), rect.width(), 50)).isEmpty() ) {
+
+                qDebug() << "in";
                 functionBox->setSelected(true);
                 treeWidget->setCurrentItem(treeWidget->topLevelItem(0)->child(0));
                 return;
@@ -1032,6 +1142,7 @@ SettingPanel::~SettingPanel()
 
 void SettingPanel::resizeEvent(QResizeEvent *event)
 {
+    qDebug() << "resizeEvent";
     treeWidget->setGeometry(0, 35, 190, 500 - 35 - 40);
     scrollArea->setGeometry(202, 50, this->width() - 204, this->height() - 90);
     makeSure->setGeometry(width() - 102, height() - 30, 80, 22);
@@ -1043,6 +1154,7 @@ void SettingPanel::resizeEvent(QResizeEvent *event)
 
 void SettingPanel::paintEvent(QPaintEvent *event)
 {
+    qDebug() << "paintEvent";
     QPainter painter(this);
     painter.drawPixmap(0, 0, width(), height(), backGroundPix);
     painter.setFont(QFont("arial", 10, QFont::Bold));
@@ -1051,7 +1163,8 @@ void SettingPanel::paintEvent(QPaintEvent *event)
     painter.drawText(QRectF(24, 8, 100, 35), tr("setupcenter"));
     painter.drawRect(QRectF(0, 35, width(), height() - 35));
 
-    painter.setPen(QColor("#D9D9D9"));
+    //painter.setPen(QColor("#D9D9D9"));
+    painter.setPen(QColor("#FF0000"));
     painter.drawLine(190, 35, 190, height() - 40);
     painter.drawLine(0, height() - 40, width(), height() - 40);
     QWidget::paintEvent(event);
@@ -1059,10 +1172,17 @@ void SettingPanel::paintEvent(QPaintEvent *event)
 
 void SettingPanel::mousePressEvent(QMouseEvent *event)
 {
+    qDebug() << "------------------------------" << event->pos();
+    qDebug() << "QMouseEvent:" << event->pos();
+    //    rectMove = QRect(0, 0, width(), 35);
     if(event->button() == Qt::LeftButton && rectMove.contains(event->pos())) {
+        qDebug() << "rectMove:" << rectMove;
         mousePress = true;
     }
     movePoint = event->globalPos() - pos();
+    qDebug() << "globalPos:" << event->globalPos();
+    qDebug() << "pos:" << pos();
+    qDebug() << "movePoint:" << movePoint;
     QWidget::mousePressEvent(event);
 }
 
@@ -1074,9 +1194,11 @@ void SettingPanel::mouseReleaseEvent(QMouseEvent *event)
 
 void SettingPanel::mouseMoveEvent(QMouseEvent *event)
 {
+    qDebug() << "mouseMoveEvent" ;
     if(mousePress) {
         QPoint movePos = event->globalPos();
         move(movePos - movePoint);
     }
     QWidget::mouseMoveEvent(event);
 }
+
